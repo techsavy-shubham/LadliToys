@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #f43f5e;
+  --color-brand-dark: #e11d48;
+  --color-sun: #fbbf24;
+  --color-ink: #1f2340;
+  --color-cream: #fffaf2;
+  --font-sans: ui-rounded, "Nunito", "Segoe UI", system-ui, sans-serif;
+}
+
+body { background: var(--color-cream); color: var(--color-ink); }
+.btn { @apply inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold transition; }
+.btn-primary { @apply bg-brand text-white hover:bg-brand-dark; }
+.btn-ghost { @apply border-2 border-ink/10 bg-white hover:border-brand hover:text-brand; }
+.container-x { @apply mx-auto w-full max-w-7xl px-4 sm:px-6; }
