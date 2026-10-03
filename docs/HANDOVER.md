@@ -19,7 +19,7 @@ Stack: Next.js (App Router), React, Tailwind CSS, Node route handlers (REST), Po
 
 1. **Database** – the live site uses **MongoDB Atlas** (`MONGODB_URI`, `MONGODB_DB`; Atlas Network Access must allow `0.0.0.0/0` because Vercel IPs change; use a dedicated database user limited to the `ladlitoys` database). If `MONGODB_URI` is absent the app falls back to PostgreSQL (`DATABASE_URL`, e.g. Neon) and finally to in-memory demo mode, where data is lost between serverless instances – never take real orders in demo mode. All data is stored in one `docs` collection/table created automatically.
 2. **Payment gateway** – add the Razorpay merchant credentials (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`). In the Razorpay dashboard add a webhook to `https://<your-domain>/api/payments/webhook` for `payment.captured`, `payment.failed` and `order.paid`. As soon as the keys exist the built-in sandbox is switched off automatically. Remove `ALLOW_SANDBOX_PAYMENTS` once real keys are set.
-3. **Email** – create a Resend account, verify the sending domain, set `RESEND_API_KEY` and `MAIL_FROM` (e.g. `Ladli Toys <orders@yourdomain.com>`). Until then every notification is only recorded in Admin → Notifications.
+3. **Email** – choose one provider. **Resend:** verify a sending domain, set `RESEND_API_KEY` and `MAIL_FROM`. **SMTP (no domain needed, e.g. Gmail):** enable 2-step verification on the Google account, create an *App password*, then set `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER=<gmail address>`, `SMTP_PASS=<app password>` (`MAIL_FROM` is optional). Check `/api/health` shows the provider. Until a provider is set every notification is only recorded in Admin → Notifications and customers cannot receive password-reset emails.
 4. **Domain** – add the custom domain in Vercel and set `NEXT_PUBLIC_SITE_URL` (used for sitemap, canonical URLs and email links).
 5. **Content** – replace seed products with real ones in Admin → Products (upload photos, set prices/stock); edit banners, categories and brands; update policies in the footer.
 6. **Change the admin password** (Account → Profile) after first login, and keep `ADMIN_PASSWORD` out of chat/e-mail.
@@ -34,7 +34,9 @@ Stack: Next.js (App Router), React, Tailwind CSS, Node route handlers (REST), Po
 | `MONGODB_URI`, `MONGODB_DB` | recommended | MongoDB Atlas connection string and database name (takes priority) |
 | `DATABASE_URL` | alternative | PostgreSQL connection string (used when `MONGODB_URI` is not set) |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | for online payments | merchant credentials |
-| `RESEND_API_KEY`, `MAIL_FROM` | for emails | |
+| `RESEND_API_KEY`, `MAIL_FROM` | for emails | Resend provider |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | for emails | SMTP provider (used when Resend is not configured) |
+| `ALLOW_DEMO_DB` | demo/tests only | lets a production build run on in-memory storage. Without it, sign-ups and orders are refused (503) when no database is connected |
 | `NEXT_PUBLIC_SITE_URL` | recommended | e.g. `https://www.ladlitoys.com` |
 | `ALLOW_SANDBOX_PAYMENTS` | demo only | `true` enables the test gateway when no Razorpay keys exist. **Never** leave on for a live store |
 | `ALLOW_DEV_RESET_LINK` | dev only | returns the password-reset link in the API response. Never in production |
@@ -65,7 +67,15 @@ Stack: Next.js (App Router), React, Tailwind CSS, Node route handlers (REST), Po
 - Password-reset links are only emailed, never returned by the API (unless `ALLOW_DEV_RESET_LINK=true`).
 - Known limitation: rate limiting is per serverless instance. Add Vercel Firewall / Upstash for stricter global limits at scale.
 
-## 7. Testing
+## 7. Verifying production readiness
+
+```
+node scripts/verify.mjs https://your-site.com
+VERIFY_EMAIL=you@gmail.com node scripts/verify.mjs https://your-site.com   # also delivers a real reset email to you
+```
+Checks the persistent database (`/api/health`), stock deduction and restoration on order/cancel (simple and variant products), the oversell guard, and the password-reset flow. The test order is cancelled automatically so stock is restored.
+
+## 8. Testing
 
 ```
 npm install
@@ -76,6 +86,6 @@ npm run test:e2e        # 10 scenarios x 3 projects (Chromium, Firefox, mobile C
 Tests start their own server on port 3113 with test credentials. To run against a deployed site: `E2E_BASE_URL=https://… npx playwright test --grep-invert admin`.
 Safari/WebKit was not available in the build environment, so it has not been tested; please do a quick manual pass on an iPhone before launch.
 
-## 8. Database layer
+## 9. Database layer
 
 Data is stored through `lib/db.ts` (a small document store with MongoDB, PostgreSQL and in-memory backends). `prisma/schema.prisma` contains the fully normalised model for a later migration if reporting needs grow.
