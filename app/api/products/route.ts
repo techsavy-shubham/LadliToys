@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { queryProducts, type SortKey } from "@/lib/data";
+import { searchProducts } from "@/lib/catalog";
+import type { SortKey } from "@/lib/data";
 
 const num = (v: string | null) => (v != null && v !== "" && !isNaN(Number(v)) ? Number(v) : undefined);
 
-export function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
   const s = req.nextUrl.searchParams;
-  const result = queryProducts({
+  const result = await searchProducts({
     q: s.get("q") || undefined,
     category: s.get("category") || undefined,
     brand: s.get("brand") || undefined,

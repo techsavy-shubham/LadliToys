@@ -5,20 +5,21 @@ import Gallery from "@/components/Gallery";
 import ProductCard, { Stars } from "@/components/ProductCard";
 import ProductPurchase from "@/components/ProductPurchase";
 import Reviews from "@/components/Reviews";
-import { brands, categories, getProduct, related } from "@/lib/data";
+import { findProduct, getBrands, getCategories, relatedTo } from "@/lib/catalog";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const p = getProduct((await params).slug);
+  const p = await findProduct((await params).slug);
   return p ? { title: p.name, description: p.description } : {};
 }
 
 export default async function ProductPage({ params }: Props) {
-  const p = getProduct((await params).slug);
+  const p = await findProduct((await params).slug);
   if (!p) notFound();
-  const cat = categories.find((c) => c.slug === p.categorySlug)!;
-  const brand = brands.find((b) => b.slug === p.brandSlug)!;
+  const [categories, brands, rel] = await Promise.all([getCategories(true), getBrands(), relatedTo(p)]);
+  const cat = categories.find((c) => c.slug === p.categorySlug) ?? { slug: p.categorySlug, name: p.categorySlug };
+  const brand = brands.find((b) => b.slug === p.brandSlug) ?? { slug: p.brandSlug, name: p.brandSlug };
 
   return (
     <div className="container-x py-8">
@@ -28,7 +29,7 @@ export default async function ProductPage({ params }: Props) {
       </nav>
 
       <div className="grid gap-8 md:grid-cols-2 lg:gap-14">
-        <Gallery emoji={p.emoji} colors={p.colors} />
+        <Gallery emoji={p.emoji} colors={p.colors} images={p.images} />
         <div className="space-y-5">
           <div>
             <Link href={`/products?brand=${brand.slug}`} className="text-sm font-bold text-brand">{brand.name}</Link>
@@ -52,7 +53,7 @@ export default async function ProductPage({ params }: Props) {
       <section className="mt-12">
         <h2 className="mb-4 text-2xl font-extrabold">Related Toys</h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4">
-          {related(p).map((r) => <ProductCard key={r.id} p={r} />)}
+          {rel.map((r) => <ProductCard key={r.id} p={r} />)}
         </div>
       </section>
     </div>

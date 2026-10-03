@@ -17,7 +17,7 @@ export default function ProductCard({ p }: { p: Product }) {
     <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-ink/5 transition hover:-translate-y-1 hover:shadow-lg">
       <Link href={`/products/${p.slug}`} className="flex flex-1 flex-col">
         <div className="relative overflow-hidden">
-          <ProductImage emoji={p.emoji} colors={p.colors} className="transition group-hover:scale-105" />
+          <ProductImage emoji={p.emoji} colors={p.colors} src={p.images?.[0]} className="transition group-hover:scale-105" />
           {p.discountPercent > 0 && (
             <span className="absolute left-3 top-3 rounded-full bg-brand px-2.5 py-1 text-xs font-extrabold text-white">-{p.discountPercent}%</span>
           )}

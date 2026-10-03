@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import LoadMoreGrid from "@/components/LoadMoreGrid";
-import { ageGroups, brands, categories, queryProducts, type SortKey } from "@/lib/data";
+import { ageGroups, type SortKey } from "@/lib/data";
+import { getBrands, getCategories, searchProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = { title: "Shop All Toys" };
 
@@ -17,7 +18,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     minRating: sp.rating ? Number(sp.rating) : undefined, inStock: sp.inStock === "true",
     featured: sp.featured === "true", isNew: sp.new === "true", sort: (sp.sort as SortKey) || "newest",
   };
-  const result = queryProducts({ ...filters, limit: 12 });
+  const [result, categories, brands] = await Promise.all([searchProducts({ ...filters, limit: 12 }), getCategories(), getBrands()]);
 
   // Query string passed to the client for "load more" API calls
   const apiQs = new URLSearchParams(

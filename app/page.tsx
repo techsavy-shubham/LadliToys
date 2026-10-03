@@ -1,7 +1,8 @@
 import Link from "next/link";
 import HeroBanners from "@/components/HeroBanners";
 import ProductCard from "@/components/ProductCard";
-import { ageGroups, banners, bestSellers, categories, queryProducts } from "@/lib/data";
+import { ageGroups } from "@/lib/data";
+import { getBanners, getCategories, searchProducts } from "@/lib/catalog";
 
 function Section({ title, href, children }: { title: string; href?: string; children: React.ReactNode }) {
   return (
@@ -19,10 +20,14 @@ const Grid = ({ children }: { children: React.ReactNode }) => (
   <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">{children}</div>
 );
 
-export default function Home() {
-  const featured = queryProducts({ featured: true, limit: 8, sort: "rating" }).items;
-  const arrivals = queryProducts({ isNew: true, limit: 4, sort: "newest" }).items;
-  const deals = queryProducts({ sort: "popularity", limit: 48 }).items.filter((p) => p.discountPercent >= 20).slice(0, 4);
+export default async function Home() {
+  const [banners, categories, f, a, b, d] = await Promise.all([
+    getBanners(), getCategories(),
+    searchProducts({ featured: true, limit: 8, sort: "rating" }), searchProducts({ isNew: true, limit: 4, sort: "newest" }),
+    searchProducts({ sort: "popularity", limit: 4 }), searchProducts({ sort: "popularity", limit: 48 }),
+  ]);
+  const featured = f.items, arrivals = a.items, best = b.items;
+  const deals = d.items.filter((p) => p.discountPercent >= 20).slice(0, 4);
 
   return (
     <>
@@ -55,7 +60,7 @@ export default function Home() {
 
       <Section title="Featured Toys" href="/products?featured=true"><Grid>{featured.map((p) => <ProductCard key={p.id} p={p} />)}</Grid></Section>
       <Section title="New Arrivals" href="/products?new=true&sort=newest"><Grid>{arrivals.map((p) => <ProductCard key={p.id} p={p} />)}</Grid></Section>
-      <Section title="Best Sellers" href="/products?sort=popularity"><Grid>{bestSellers(4).map((p) => <ProductCard key={p.id} p={p} />)}</Grid></Section>
+      <Section title="Best Sellers" href="/products?sort=popularity"><Grid>{best.map((p) => <ProductCard key={p.id} p={p} />)}</Grid></Section>
       <Section title="Hot Deals" href="/products?sort=price-asc"><Grid>{deals.map((p) => <ProductCard key={p.id} p={p} />)}</Grid></Section>
 
       <Section title="Happy Parents">

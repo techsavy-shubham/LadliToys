@@ -1,4 +1,4 @@
 import { NextResponse } from "next/server";
-import { brands } from "@/lib/data";
+import { getBrands } from "@/lib/catalog";
 
-export const GET = () => NextResponse.json({ items: brands });
+export const GET = async () => NextResponse.json({ items: await getBrands() });

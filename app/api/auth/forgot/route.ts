@@ -3,6 +3,8 @@ const hashToken = (t: string) => createHash("sha256").update(t).digest("hex");
 import { NextResponse } from "next/server";
 import { bad, isEmail, rateLimited, str } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { emailConfigured, notify } from "@/lib/notify";
+import type { User } from "@/lib/auth";
 
 
 // Email delivery arrives with the notifications milestone. Until an email provider is configured
@@ -19,5 +21,7 @@ export async function POST(req: Request) {
   const token = randomBytes(24).toString("hex");
   await db.put("resets", hashToken(token), { userId: idx.userId, exp: Date.now() + 3600_000 });
   const link = `/reset-password?token=${token}`;
-  return NextResponse.json({ message, ...(process.env.EMAIL_ENABLED === "true" ? {} : { devResetLink: link }) });
+  const user = await db.get<User>("users", idx.userId);
+  if (user) await notify(user.email, "password_reset", { name: user.name, link });
+  return NextResponse.json({ message, ...(emailConfigured() ? {} : { devResetLink: link }) });
 }

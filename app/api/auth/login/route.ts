@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bad, publicUser, rateLimited, str, verifyPassword, withSession, type User } from "@/lib/auth";
+import { bad, ensureAdmin, publicUser, rateLimited, str, verifyPassword, withSession, type User } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function POST(req: Request) {
@@ -7,6 +7,7 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const email = str(b.email).toLowerCase();
   const password = typeof b.password === "string" ? b.password : "";
+  await ensureAdmin(email, password);
   const idx = await db.get<{ userId: string }>("emails", email);
   const user = idx ? await db.get<User>("users", idx.userId) : null;
   if (!user || !verifyPassword(password, user.passwordHash)) return bad("Incorrect email or password.", 401);

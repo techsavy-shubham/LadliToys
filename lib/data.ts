@@ -1,17 +1,17 @@
 // Seed catalog for Milestone 1. Mirrors prisma/schema.prisma so the data layer
 // can be swapped for a PostgreSQL/MySQL-backed implementation without touching the API or UI.
 
-export type Category = { id: string; slug: string; name: string; emoji: string; color: string; active: boolean };
-export type Brand = { id: string; slug: string; name: string };
+export type Category = { id: string; slug: string; name: string; emoji: string; color: string; active: boolean; deleted?: boolean };
+export type Brand = { id: string; slug: string; name: string; deleted?: boolean };
 export type AgeGroup = { slug: string; label: string; emoji: string; min: number; max: number };
-export type Banner = { id: string; title: string; subtitle: string; cta: string; href: string; from: string; to: string; emoji: string };
+export type Banner = { id: string; title: string; subtitle: string; cta: string; href: string; from: string; to: string; emoji: string; active?: boolean; image?: string; deleted?: boolean };
 export type Variant = { id: string; sku: string; label: string; price: number; stock: number };
 export type Product = {
   id: string; slug: string; sku: string; name: string; description: string;
   price: number; discountPercent: number; stock: number; categorySlug: string; brandSlug: string;
   ageGroup: string; ageLabel: string; rating: number; reviewCount: number; sold: number;
   emoji: string; colors: [string, string]; material: string; safety: string;
-  featured: boolean; isNew: boolean; variants: Variant[]; createdAt: string; published: boolean;
+  featured: boolean; isNew: boolean; variants: Variant[]; createdAt: string; published: boolean; images?: string[]; deleted?: boolean;
 };
 
 export const categories: Category[] = [
@@ -115,8 +115,8 @@ export type ProductQuery = {
   ids?: string[]; inStock?: boolean; minRating?: number; featured?: boolean; isNew?: boolean; sort?: SortKey; page?: number; limit?: number;
 };
 
-export function queryProducts(o: ProductQuery) {
-  let list = products.filter((p) => p.published);
+export function queryProducts(o: ProductQuery, source: Product[] = products) {
+  let list = source.filter((p) => p.published);
   if (o.q) {
     const q = o.q.toLowerCase();
     list = list.filter((p) => [p.name, p.sku, p.description, p.categorySlug, p.brandSlug].some((f) => f.toLowerCase().includes(q)));
@@ -145,9 +145,5 @@ export function queryProducts(o: ProductQuery) {
   return { items: list.slice((page - 1) * limit, page * limit), total, page, limit, hasMore: page * limit < total };
 }
 
-export const getProduct = (slug: string) => products.find((p) => p.slug === slug && p.published);
-export const bestSellers = (n = 8) => queryProducts({ sort: "popularity", limit: n }).items;
-export const related = (p: Product, n = 4) =>
-  products.filter((x) => x.categorySlug === p.categorySlug && x.id !== p.id).slice(0, n);
 
 export const formatPrice = (n: number) => `₹${n.toLocaleString("en-IN")}`;

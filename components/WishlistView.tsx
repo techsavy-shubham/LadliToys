@@ -23,7 +23,7 @@ export default function WishlistView() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((p) => (
             <div key={p.id} className="flex gap-4 rounded-3xl bg-white p-4 ring-1 ring-ink/5">
-              <Link href={`/products/${p.slug}`} className="w-28 shrink-0"><ProductImage emoji={p.emoji} colors={p.colors} className="rounded-2xl [&>span]:!text-5xl" /></Link>
+              <Link href={`/products/${p.slug}`} className="w-28 shrink-0"><ProductImage emoji={p.emoji} colors={p.colors} src={p.images?.[0]} className="rounded-2xl [&>span]:!text-5xl" /></Link>
               <div className="flex flex-1 flex-col gap-1 text-sm">
                 <Link href={`/products/${p.slug}`} className="font-bold hover:text-brand">{p.name}</Link>
                 <span className="font-extrabold text-brand">{formatPrice(finalPrice(p))}</span>

@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/data";
 import { Addresses, RequireLogin } from "./AccountView";
 import { Err } from "./AuthForm";
 import { useCoupon, useQuote } from "./CartView";
+import { startPayment } from "@/lib/pay-client";
 import ProductImage from "./ProductImage";
 import { Totals } from "./OrdersView";
 
@@ -21,6 +22,11 @@ export default function CheckoutView() {
 
   async function place() {
     setErr(""); setBusy(true);
+    if (pay === "ONLINE") {
+      const e = await startPayment({ items: cart, coupon: q?.coupon?.code, addressId }, () => { clearCart(); try { sessionStorage.removeItem("ladli_coupon"); } catch {} }, (p) => router.push(p));
+      if (e) { setErr(e); setBusy(false); }
+      return;
+    }
     const r = await api("/api/orders", "POST", { items: cart, coupon: q?.coupon?.code, addressId, paymentMethod: pay });
     setBusy(false);
     if (!r.ok) return setErr(r.data.error || "Could not place order.");
@@ -46,8 +52,8 @@ export default function CheckoutView() {
                 <label className={`flex cursor-pointer gap-3 rounded-2xl border-2 p-4 ${pay === "COD" ? "border-brand bg-brand/5" : "border-ink/10"}`}>
                   <input type="radio" checked={pay === "COD"} onChange={() => setPay("COD")} /><span><strong>Cash on Delivery</strong><br />Pay when your order arrives.</span>
                 </label>
-                <label className="flex gap-3 rounded-2xl border-2 border-ink/10 p-4 opacity-50">
-                  <input type="radio" disabled /><span><strong>Card / UPI / Net banking</strong><br />Coming soon — available when the payment gateway is connected.</span>
+                <label className={`flex cursor-pointer gap-3 rounded-2xl border-2 p-4 ${pay === "ONLINE" ? "border-brand bg-brand/5" : "border-ink/10"}`}>
+                  <input type="radio" checked={pay === "ONLINE"} onChange={() => setPay("ONLINE")} /><span><strong>Pay online</strong><br />Card, UPI or net banking via secure checkout. Card details never touch our servers.</span>
                 </label>
               </div>
             </section>
@@ -56,7 +62,7 @@ export default function CheckoutView() {
               <ul className="space-y-3">
                 {q?.lines.map((l) => (
                   <li key={l.productId + l.variantId} className="flex items-center gap-3 text-sm">
-                    <ProductImage emoji={l.emoji} colors={l.colors} className="h-14 w-14 rounded-xl [&>span]:!text-2xl" />
+                    <ProductImage emoji={l.emoji} colors={l.colors} src={l.image} className="h-14 w-14 rounded-xl [&>span]:!text-2xl" />
                     <div className="flex-1"><div className="font-bold">{l.name}</div><div className="text-ink/60">{l.variantLabel && `${l.variantLabel} · `}Qty {l.qty}</div>{l.issue && <div className="font-semibold text-red-600">{l.issue} — <Link href="/cart" className="underline">update cart</Link></div>}</div>
                     <div className="font-bold">{formatPrice(l.lineTotal)}</div>
                   </li>
@@ -67,7 +73,7 @@ export default function CheckoutView() {
           <aside className="h-fit space-y-4">
             {q && <Totals q={{ ...q, couponCode: q.coupon?.code }} />}
             <Err m={err} />
-            <button disabled={blocked} onClick={place} className="btn btn-primary w-full py-3 disabled:opacity-40">{busy ? "Placing order…" : `Place order${q ? ` · ${formatPrice(q.total)}` : ""}`}</button>
+            <button disabled={blocked} onClick={place} className="btn btn-primary w-full py-3 disabled:opacity-40">{busy ? "Please wait…" : pay === "ONLINE" ? `Pay ${q ? formatPrice(q.total) : ""}` : `Place order${q ? ` · ${formatPrice(q.total)}` : ""}`}</button>
             {!addressId && <p className="text-xs text-ink/60">Choose or add a delivery address to continue.</p>}
             <Link href="/cart" className="block text-center text-sm font-bold text-brand">← Back to cart</Link>
           </aside>

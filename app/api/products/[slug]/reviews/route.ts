@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { bad, getUser, str, unauthorized } from "@/lib/auth";
 import { db, newId } from "@/lib/db";
-import { getProduct } from "@/lib/data";
+import { findProduct } from "@/lib/catalog";
 
 type Review = { id: string; productId: string; userId: string; name: string; rating: number; body: string; approved: boolean; createdAt: string };
 type Ctx = { params: Promise<{ slug: string }> };
@@ -11,7 +11,7 @@ async function forProduct(productId: string) {
 }
 
 export async function GET(_: Request, { params }: Ctx) {
-  const p = getProduct((await params).slug);
+  const p = await findProduct((await params).slug);
   if (!p) return bad("Product not found.", 404);
   const items = (await forProduct(p.id)).map(({ userId: _u, ...r }) => r);
   return NextResponse.json({ items });
@@ -21,7 +21,7 @@ export async function GET(_: Request, { params }: Ctx) {
 export async function POST(req: Request, { params }: Ctx) {
   const u = await getUser();
   if (!u) return unauthorized();
-  const p = getProduct((await params).slug);
+  const p = await findProduct((await params).slug);
   if (!p) return bad("Product not found.", 404);
   const b = await req.json().catch(() => ({}));
   const rating = Math.round(Number(b.rating));

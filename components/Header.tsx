@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { categories } from "@/lib/data";
+import { getCategories } from "@/lib/catalog";
 import HeaderActions from "./HeaderActions";
 
-export default function Header() {
+export default async function Header() {
+  const categories = await getCategories();
   return (
     <header className="sticky top-0 z-40 bg-white/95 shadow-sm backdrop-blur">
       <div className="bg-ink py-1.5 text-center text-xs font-semibold text-white">

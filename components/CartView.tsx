@@ -7,7 +7,7 @@ import ProductImage from "./ProductImage";
 import { Totals } from "./OrdersView";
 
 export type Quote = {
-  lines: { productId: string; variantId?: string; slug: string; name: string; variantLabel?: string; emoji: string; colors: [string, string]; listPrice: number; unitPrice: number; qty: number; stock: number; lineTotal: number; issue?: string }[];
+  lines: { productId: string; variantId?: string; slug: string; name: string; variantLabel?: string; emoji: string; colors: [string, string]; image?: string; listPrice: number; unitPrice: number; qty: number; stock: number; lineTotal: number; issue?: string }[];
   itemsTotal: number; savings: number; discount: number; coupon: { code: string; label: string } | null; couponError?: string; shipping: number; tax: number; total: number; count: number;
 };
 
@@ -51,7 +51,7 @@ export default function CartView() {
         <ul className="space-y-3">
           {(q?.lines ?? []).map((l) => (
             <li key={l.productId + l.variantId} className="flex gap-4 rounded-3xl bg-white p-4 ring-1 ring-ink/5">
-              <Link href={`/products/${l.slug}`} className="w-24 shrink-0"><ProductImage emoji={l.emoji} colors={l.colors} className="rounded-2xl [&>span]:!text-4xl" /></Link>
+              <Link href={`/products/${l.slug}`} className="w-24 shrink-0"><ProductImage emoji={l.emoji} colors={l.colors} src={l.image} className="rounded-2xl [&>span]:!text-4xl" /></Link>
               <div className="flex flex-1 flex-col gap-1 text-sm">
                 <Link href={`/products/${l.slug}`} className="font-bold hover:text-brand">{l.name}</Link>
                 {l.variantLabel && <span className="text-ink/60">Option: {l.variantLabel}</span>}

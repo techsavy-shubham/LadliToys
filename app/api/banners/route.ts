@@ -1,4 +1,4 @@
 import { NextResponse } from "next/server";
-import { banners } from "@/lib/data";
+import { getBanners } from "@/lib/catalog";
 
-export const GET = () => NextResponse.json({ items: banners });
+export const GET = async () => NextResponse.json({ items: await getBanners() });

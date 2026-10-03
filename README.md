@@ -1,29 +1,32 @@
-# Ladli Toys – Milestone 2: Shopping Experience
+# Ladli Toys – Milestone 3: Admin, Orders & Payments
 
-Builds on Milestone 1 (storefront, catalog, product pages, product APIs).
+Builds on Milestones 1–2 (storefront, accounts, cart, checkout).
 
-**Added in Milestone 2**
-- Search & filtering: category, age, brand, price range, minimum rating, in-stock only; sorting by newest / popularity / rating / price
-- Customer accounts: register, login, logout, forgot/reset password, profile & password change (scrypt-hashed passwords, signed httpOnly session cookie, basic rate limiting)
-- Address management: add / edit / delete / default address
-- Wishlist: guests (browser) and logged-in customers (saved to account, merged on login), move to cart
-- Cart: variants, quantity management, stock validation, coupons, shipping & tax calculation (server-side quote API)
-- Checkout: address selection, payment method, order review, order creation, confirmation page, order history
-- Product reviews: star rating + text for logged-in customers
-- Quick add-to-cart and wishlist heart on product cards
+**Added in Milestone 3**
+- **Admin authentication** – role-based; the store owner account is created from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. All `/api/admin/*` routes and `/admin/*` pages are admin-only.
+- **Dashboard** – total sales, orders, customers, products, pending/completed orders, low-stock toys, recent orders & customers, 14-day sales chart.
+- **Catalog management** – products (create/edit/delete, publish/unpublish, image upload, pricing & discounts, SKU, variants, age group, brand, category), categories (activate/deactivate), brands, homepage banners.
+- **Inventory** – stock per product and per variant, low-stock / out-of-stock indicators, inline stock updates. Stock is deducted when an order is confirmed and restored on cancellation.
+- **Customers** – list, search, order count, total spend, enable/disable account, order history.
+- **Orders** – search/filter, details, status updates, shipping/tracking details, cancel, refund.
+- **Payments** – Razorpay integration (create order → checkout → signature verification → webhook) using merchant credentials supplied via environment variables, plus a built-in sandbox gateway used automatically while no credentials are configured. Success / failure / cancellation handling, retry from the order page, payment ↔ order mapping, payment status management.
+- **Coupons** – percentage or fixed, minimum order, maximum discount, expiry, usage limit, active/inactive; validated server-side at cart and checkout.
+- **Review moderation** – hide / approve / delete.
+- **Basic sales dashboard & analytics**.
 
-**API additions:** `/api/auth/*`, `/api/me`, `/api/addresses`, `/api/wishlist`, `/api/cart/quote`, `/api/orders`, `/api/products/[slug]/reviews`
-
-**Notes**
-- Data layer (`lib/db.ts`) uses PostgreSQL when `DATABASE_URL` is set, otherwise in-memory (demo mode – data resets on server restart).
-- Payment: Cash on Delivery only; online payments arrive in Milestone 3. Coupons `WELCOME10` and `TOY100` are placeholders until admin-managed coupons (Milestone 3).
-- Password-reset emails need an email provider (Milestone 4); until `EMAIL_ENABLED=true` the reset link is shown on screen.
-- Shipping: ₹99, free over ₹999. Tax: 5% GST added at checkout.
+## Environment variables
+| Variable | Purpose |
+|---|---|
+| `AUTH_SECRET` | required – signs session cookies |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | creates the admin account on first login |
+| `DATABASE_URL` | optional – PostgreSQL (Neon). Without it data is in memory (demo mode) |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | client's Razorpay credentials (enables real payments) |
+| `RAZORPAY_WEBHOOK_SECRET` | webhook endpoint: `/api/payments/webhook` |
+| `RESEND_API_KEY`, `MAIL_FROM` | optional – send transactional emails |
 
 ## Run
 ```
 npm install
-AUTH_SECRET=some-long-random-string npm run dev   # http://localhost:3000
+AUTH_SECRET=change-me ADMIN_EMAIL=you@example.com ADMIN_PASSWORD=change-me-too npm run dev
 ```
-Env vars: `AUTH_SECRET` (required in production), `DATABASE_URL` (optional Postgres/Neon), `EMAIL_ENABLED`.
-Live demo: https://ladli-toys.vercel.app
+Live demo: https://ladli-toys.vercel.app (admin at `/admin`)

@@ -77,3 +77,18 @@ export function rateLimited(req: Request, key: string, max = 10, windowMs = 60_0
 export const isEmail = (s: unknown): s is string => typeof s === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && s.length <= 200;
 export const str = (v: unknown, max = 200) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 export type { Doc };
+
+export async function requireAdmin(): Promise<User | null> {
+  const u = await getUser();
+  return u && u.role === "ADMIN" ? u : null;
+}
+
+// The store owner's admin account is created from ADMIN_EMAIL / ADMIN_PASSWORD on first login.
+export async function ensureAdmin(email: string, password: string) {
+  const ae = (process.env.ADMIN_EMAIL || "").toLowerCase();
+  if (!ae || email !== ae || !process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) return;
+  if (await db.get("emails", email)) return;
+  const user: User = { ...newUserDoc({ name: "Store Admin", email, phone: "", passwordHash: hashPassword(password) }), role: "ADMIN" };
+  await db.put("users", user.id, user);
+  await db.put("emails", email, { userId: user.id });
+}
