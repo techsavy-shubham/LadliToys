@@ -1,16 +1,23 @@
 "use client";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { formatPrice, type Product, finalPrice } from "@/lib/data";
+import { finalPrice, formatPrice, type Product } from "@/lib/data";
+import { useStore } from "@/lib/client-state";
+import { WishlistHeart } from "./CardActions";
 
-// Variant + quantity selection. Cart/wishlist persistence arrives in Milestone 2.
 export default function ProductPurchase({ product: p }: { product: Product }) {
-  const [vid, setVid] = useState(p.variants[0]?.id);
+  const router = useRouter();
+  const { addToCart } = useStore();
+  const [vid, setVid] = useState(p.variants.find((x) => x.stock > 0)?.id ?? p.variants[0]?.id);
   const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
   const v = p.variants.find((x) => x.id === vid);
   const basePrice = v ? v.price : p.price;
   const price = finalPrice({ price: basePrice, discountPercent: p.discountPercent });
   const stock = v ? v.stock : p.stock;
   const out = stock === 0;
+  const add = () => addToCart({ productId: p.id, variantId: v?.id, qty });
 
   return (
     <div className="space-y-5">
@@ -46,14 +53,16 @@ export default function ProductPurchase({ product: p }: { product: Product }) {
         <div className="flex items-center rounded-full border-2 border-ink/10 bg-white">
           <button aria-label="Decrease quantity" className="h-11 w-11 text-xl font-bold" onClick={() => setQty((q) => Math.max(1, q - 1))}>−</button>
           <span className="w-8 text-center font-bold">{qty}</span>
-          <button aria-label="Increase quantity" className="h-11 w-11 text-xl font-bold" onClick={() => setQty((q) => Math.min(stock || 1, q + 1))}>+</button>
+          <button aria-label="Increase quantity" className="h-11 w-11 text-xl font-bold" onClick={() => setQty((q) => Math.min(Math.min(stock, 20) || 1, q + 1))}>+</button>
         </div>
         <button disabled={out} className="btn btn-primary flex-1 py-3 disabled:opacity-40 sm:flex-none sm:px-10"
-          onClick={() => alert("Cart & checkout arrive in Milestone 2.")}>
-          Add to cart
+          onClick={() => { add(); setAdded(true); setTimeout(() => setAdded(false), 2000); }}>
+          {added ? "Added ✓" : "Add to cart"}
         </button>
-        <button disabled={out} className="btn btn-ghost py-3 disabled:opacity-40" onClick={() => alert("Checkout arrives in Milestone 2.")}>Buy now</button>
+        <button disabled={out} className="btn btn-ghost py-3 disabled:opacity-40" onClick={() => { add(); router.push("/checkout"); }}>Buy now</button>
+        <WishlistHeart productId={p.id} className="!h-11 !w-11 ring-2 ring-ink/10" />
       </div>
+      {added && <Link href="/cart" className="inline-block text-sm font-bold text-brand hover:underline">View cart →</Link>}
     </div>
   );
 }

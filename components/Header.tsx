@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { categories } from "@/lib/data";
+import HeaderActions from "./HeaderActions";
 
 export default function Header() {
   return (
@@ -17,11 +18,7 @@ export default function Header() {
             className="w-full rounded-full border-2 border-ink/10 bg-cream px-5 py-2 text-sm outline-none focus:border-brand"
           />
         </form>
-        <nav className="ml-auto flex items-center gap-1 text-sm font-bold">
-          <Link href="/products" className="rounded-full px-3 py-2 hover:bg-cream">Shop</Link>
-          <span title="Coming in the next milestone" className="hidden rounded-full px-3 py-2 opacity-60 sm:inline">♡ Wishlist</span>
-          <span title="Coming in the next milestone" className="rounded-full px-3 py-2 opacity-60">🛒 Cart</span>
-        </nav>
+        <HeaderActions />
       </div>
       <form action="/products" className="container-x pb-3 md:hidden">
         <input name="q" type="search" placeholder="Search toys…" aria-label="Search"

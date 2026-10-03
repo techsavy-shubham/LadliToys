@@ -112,7 +112,7 @@ export const finalPrice = (p: { price: number; discountPercent: number }) =>
 export type SortKey = "newest" | "price-asc" | "price-desc" | "popularity" | "rating";
 export type ProductQuery = {
   q?: string; category?: string; brand?: string; age?: string; minPrice?: number; maxPrice?: number;
-  inStock?: boolean; featured?: boolean; isNew?: boolean; sort?: SortKey; page?: number; limit?: number;
+  ids?: string[]; inStock?: boolean; minRating?: number; featured?: boolean; isNew?: boolean; sort?: SortKey; page?: number; limit?: number;
 };
 
 export function queryProducts(o: ProductQuery) {
@@ -126,6 +126,8 @@ export function queryProducts(o: ProductQuery) {
   if (o.age) list = list.filter((p) => p.ageGroup === o.age);
   if (o.minPrice != null) list = list.filter((p) => finalPrice(p) >= o.minPrice!);
   if (o.maxPrice != null) list = list.filter((p) => finalPrice(p) <= o.maxPrice!);
+  if (o.ids) list = list.filter((p) => o.ids!.includes(p.id));
+  if (o.minRating != null) list = list.filter((p) => p.rating >= o.minRating!);
   if (o.inStock) list = list.filter((p) => p.stock > 0);
   if (o.featured) list = list.filter((p) => p.featured);
   if (o.isNew) list = list.filter((p) => p.isNew);

@@ -12,6 +12,8 @@ export function GET(req: NextRequest) {
     age: s.get("age") || undefined,
     minPrice: num(s.get("minPrice")),
     maxPrice: num(s.get("maxPrice")),
+    ids: s.get("ids")?.split(",").filter(Boolean),
+    minRating: num(s.get("rating")),
     inStock: s.get("inStock") === "true",
     featured: s.get("featured") === "true",
     isNew: s.get("new") === "true",

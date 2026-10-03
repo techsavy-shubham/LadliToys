@@ -13,13 +13,15 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const filters = {
     q: sp.q, category: sp.category, age: sp.age, brand: sp.brand,
+    minPrice: sp.minPrice ? Number(sp.minPrice) : undefined, maxPrice: sp.maxPrice ? Number(sp.maxPrice) : undefined,
+    minRating: sp.rating ? Number(sp.rating) : undefined, inStock: sp.inStock === "true",
     featured: sp.featured === "true", isNew: sp.new === "true", sort: (sp.sort as SortKey) || "newest",
   };
   const result = queryProducts({ ...filters, limit: 12 });
 
   // Query string passed to the client for "load more" API calls
   const apiQs = new URLSearchParams(
-    Object.entries({ q: sp.q, category: sp.category, age: sp.age, brand: sp.brand, featured: sp.featured, new: sp.new, sort: filters.sort, limit: "12" })
+    Object.entries({ q: sp.q, category: sp.category, age: sp.age, brand: sp.brand, featured: sp.featured, new: sp.new, minPrice: sp.minPrice, maxPrice: sp.maxPrice, rating: sp.rating, inStock: sp.inStock, sort: filters.sort, limit: "12" })
       .filter(([, v]) => v) as [string, string][],
   ).toString();
 
@@ -41,6 +43,21 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[220px_1fr]">
         <aside className="space-y-6">
+          <form action="/products" className="space-y-3 rounded-3xl bg-white p-4 text-sm ring-1 ring-ink/5">
+            {Object.entries(sp).filter(([k, v]) => v && !["minPrice", "maxPrice", "rating", "inStock"].includes(k)).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-ink/50">Price (₹)</h2>
+            <div className="flex items-center gap-2">
+              <input name="minPrice" type="number" min={0} defaultValue={sp.minPrice} placeholder="Min" aria-label="Minimum price" className="w-full rounded-xl border-2 border-ink/10 px-2 py-1.5 outline-none focus:border-brand" />
+              <span>–</span>
+              <input name="maxPrice" type="number" min={0} defaultValue={sp.maxPrice} placeholder="Max" aria-label="Maximum price" className="w-full rounded-xl border-2 border-ink/10 px-2 py-1.5 outline-none focus:border-brand" />
+            </div>
+            <h2 className="text-sm font-extrabold uppercase tracking-wide text-ink/50">Rating</h2>
+            <select name="rating" defaultValue={sp.rating ?? ""} aria-label="Minimum rating" className="w-full rounded-xl border-2 border-ink/10 px-2 py-1.5">
+              <option value="">Any rating</option><option value="4.5">4.5★ & up</option><option value="4">4★ & up</option><option value="3">3★ & up</option>
+            </select>
+            <label className="flex items-center gap-2 font-semibold"><input type="checkbox" name="inStock" value="true" defaultChecked={sp.inStock === "true"} /> In stock only</label>
+            <div className="flex gap-2"><button className="btn btn-primary !px-4 !py-1.5">Apply</button><Link href={href({ minPrice: undefined, maxPrice: undefined, rating: undefined, inStock: undefined })} className="btn btn-ghost !px-4 !py-1.5">Reset</Link></div>
+          </form>
           <div>
             <h2 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-ink/50">Category</h2>
             <div className="flex flex-wrap gap-2 lg:flex-col lg:items-start">

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Gallery from "@/components/Gallery";
 import ProductCard, { Stars } from "@/components/ProductCard";
 import ProductPurchase from "@/components/ProductPurchase";
+import Reviews from "@/components/Reviews";
 import { brands, categories, getProduct, related } from "@/lib/data";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -46,12 +47,7 @@ export default async function ProductPage({ params }: Props) {
         </div>
       </div>
 
-      <section className="mt-12">
-        <h2 className="mb-4 text-2xl font-extrabold">Customer Reviews</h2>
-        <div className="rounded-3xl bg-white p-6 text-sm text-ink/60 ring-1 ring-ink/5">
-          Rated <strong className="text-ink">{p.rating}/5</strong> by {p.reviewCount} customers. Written reviews will be available in the next release.
-        </div>
-      </section>
+      <Reviews slug={p.slug} rating={p.rating} count={p.reviewCount} />
 
       <section className="mt-12">
         <h2 className="mb-4 text-2xl font-extrabold">Related Toys</h2>
