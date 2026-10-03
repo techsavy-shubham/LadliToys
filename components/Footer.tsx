@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCategories } from "@/lib/catalog";
+import Newsletter from "./Newsletter";
 
 export default async function Footer() {
   const categories = await getCategories();
@@ -27,10 +28,7 @@ export default async function Footer() {
         <div>
           <h3 className="mb-3 font-bold text-white">Newsletter</h3>
           <p className="mb-3 text-sm">New arrivals and offers, straight to your inbox.</p>
-          <form className="flex gap-2">
-            <input type="email" placeholder="Email address" aria-label="Email" className="min-w-0 flex-1 rounded-full bg-white/10 px-4 py-2 text-sm outline-none placeholder:text-white/50" />
-            <button type="button" className="btn btn-primary">Join</button>
-          </form>
+          <Newsletter />
         </div>
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs">© {new Date().getFullYear()} Ladli Toys. All rights reserved.</div>

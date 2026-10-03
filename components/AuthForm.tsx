@@ -91,7 +91,7 @@ export function ForgotForm() {
         <Err m={err} />
         {msg && <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">{msg}</p>}
         {link && (
-          <p className="rounded-xl bg-sun/20 px-3 py-2 text-sm">Email delivery isn&apos;t switched on yet, so use this link to continue: <Link href={link} className="font-bold text-brand underline">Reset password</Link></p>
+          <p className="rounded-xl bg-sun/20 px-3 py-2 text-sm">Demo mode - use this link to continue: <Link href={link} className="font-bold text-brand underline">Reset password</Link></p>
         )}
         <button className="btn btn-primary w-full">Send reset link</button>
       </form>

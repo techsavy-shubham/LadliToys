@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { bad, getUser, unauthorized, type User } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { markPaid, markPaymentFailed, type Order } from "@/lib/orders";
-import { paymentsFor, razorpayConfigured, savePayment } from "@/lib/payments";
+import { paymentsFor, sandboxEnabled, savePayment } from "@/lib/payments";
 
 // Sandbox gateway (only active while no real gateway credentials are configured).
 export async function POST(req: Request) {
-  if (razorpayConfigured()) return bad("Sandbox gateway is disabled.", 403);
+  if (!sandboxEnabled()) return bad("Sandbox gateway is disabled.", 403);
   const u = await getUser();
   if (!u) return unauthorized();
   const b = await req.json().catch(() => ({}));

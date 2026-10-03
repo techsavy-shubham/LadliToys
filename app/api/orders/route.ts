@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bad, getUser, unauthorized } from "@/lib/auth";
+import { bad, getUser, rateLimited, unauthorized } from "@/lib/auth";
 import { createOrder, listOrders } from "@/lib/orders";
 
 export async function GET() {
@@ -14,6 +14,7 @@ export async function POST(req: Request) {
   const u = await getUser();
   if (!u) return unauthorized();
   const b = await req.json().catch(() => ({}));
+  if (rateLimited(req, "order", 20)) return bad("Too many requests. Please slow down.", 429);
   if (b.paymentMethod !== "COD") return bad("Please choose a payment method.");
   const r = await createOrder(u, { items: Array.isArray(b.items) ? b.items : [], coupon: typeof b.coupon === "string" ? b.coupon : undefined, addressId: b.addressId, method: "COD" });
   if (!r.order) return bad(r.error!);

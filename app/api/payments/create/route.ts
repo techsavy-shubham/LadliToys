@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { bad, getUser, unauthorized } from "@/lib/auth";
+import { bad, getUser, rateLimited, unauthorized } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createOrder, saveOrder, type Order } from "@/lib/orders";
-import { createGatewayOrder } from "@/lib/payments";
+import { createGatewayOrder, onlinePaymentsAvailable } from "@/lib/payments";
 
 // Starts an online payment. Either creates a new order from the cart ({items, addressId, coupon})
 // or retries payment for an existing unpaid order ({orderId}).
@@ -10,6 +10,8 @@ export async function POST(req: Request) {
   const u = await getUser();
   if (!u) return unauthorized();
   const b = await req.json().catch(() => ({}));
+  if (rateLimited(req, "pay", 20)) return bad("Too many requests. Please slow down.", 429);
+  if (!onlinePaymentsAvailable()) return bad("Online payments are not available yet. Please choose Cash on Delivery.", 503);
   let order: Order | null = null;
   if (b.orderId) {
     order = await db.get<Order>("orders", String(b.orderId));

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { mine, parseAddress, type Address } from "@/lib/addresses";
-import { bad, getUser, unauthorized } from "@/lib/auth";
+import { bad, getUser, rateLimited, unauthorized } from "@/lib/auth";
 import { db, newId } from "@/lib/db";
 
 
@@ -13,6 +13,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const u = await getUser();
   if (!u) return unauthorized();
+  if (rateLimited(req, "address", 30)) return bad("Too many requests. Please slow down.", 429);
   const body = await req.json().catch(() => ({}));
   const { value, error } = parseAddress(body);
   if (!value) return bad(error!);

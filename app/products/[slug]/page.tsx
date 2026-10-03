@@ -5,13 +5,14 @@ import Gallery from "@/components/Gallery";
 import ProductCard, { Stars } from "@/components/ProductCard";
 import ProductPurchase from "@/components/ProductPurchase";
 import Reviews from "@/components/Reviews";
+import { finalPrice } from "@/lib/data";
 import { findProduct, getBrands, getCategories, relatedTo } from "@/lib/catalog";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const p = await findProduct((await params).slug);
-  return p ? { title: p.name, description: p.description } : {};
+  return p ? { title: p.name, description: p.description.slice(0, 160), alternates: { canonical: `/products/${p.slug}` }, openGraph: { title: p.name, description: p.description.slice(0, 160), type: "website", images: p.images?.[0] ? [p.images[0]] : undefined } } : {};
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -21,8 +22,16 @@ export default async function ProductPage({ params }: Props) {
   const cat = categories.find((c) => c.slug === p.categorySlug) ?? { slug: p.categorySlug, name: p.categorySlug };
   const brand = brands.find((b) => b.slug === p.brandSlug) ?? { slug: p.brandSlug, name: p.brandSlug };
 
+  const jsonLd = {
+    "@context": "https://schema.org", "@type": "Product", name: p.name, description: p.description, sku: p.sku,
+    brand: { "@type": "Brand", name: brand.name }, image: p.images?.length ? p.images : undefined,
+    offers: { "@type": "Offer", priceCurrency: "INR", price: finalPrice(p), availability: p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", url: `/products/${p.slug}` },
+    ...(p.reviewCount > 0 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: p.reviewCount } } : {}),
+  };
+
   return (
     <div className="container-x py-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <nav className="mb-5 text-sm text-ink/60">
         <Link href="/" className="hover:text-brand">Home</Link> / <Link href="/products" className="hover:text-brand">Shop</Link> /{" "}
         <Link href={`/products?category=${cat.slug}`} className="hover:text-brand">{cat.name}</Link> / <span className="text-ink">{p.name}</span>

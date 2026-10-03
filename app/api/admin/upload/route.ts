@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bad, requireAdmin, unauthorized } from "@/lib/auth";
+import { bad, rateLimited, requireAdmin, unauthorized } from "@/lib/auth";
 import { db, newId } from "@/lib/db";
 
 const TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -8,6 +8,7 @@ const TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 // (swap for S3 / Cloudinary / Vercel Blob when object storage is provisioned).
 export async function POST(req: Request) {
   if (!(await requireAdmin())) return unauthorized();
+  if (rateLimited(req, "upload", 30)) return bad("Too many uploads. Please wait a moment.", 429);
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) return bad("No file uploaded.");

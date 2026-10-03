@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, useStore } from "@/lib/client-state";
 import { formatPrice } from "@/lib/data";
 import { Addresses, RequireLogin } from "./AccountView";
@@ -18,6 +18,8 @@ export default function CheckoutView() {
   const q = useQuote(coupon);
   const [addressId, setAddressId] = useState("");
   const [pay, setPay] = useState("COD");
+  const [online, setOnline] = useState(false);
+  useEffect(() => { api("/api/config").then((r) => setOnline(!!r.data.onlinePayments)); }, []);
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
 
   async function place() {
@@ -52,9 +54,9 @@ export default function CheckoutView() {
                 <label className={`flex cursor-pointer gap-3 rounded-2xl border-2 p-4 ${pay === "COD" ? "border-brand bg-brand/5" : "border-ink/10"}`}>
                   <input type="radio" checked={pay === "COD"} onChange={() => setPay("COD")} /><span><strong>Cash on Delivery</strong><br />Pay when your order arrives.</span>
                 </label>
-                <label className={`flex cursor-pointer gap-3 rounded-2xl border-2 p-4 ${pay === "ONLINE" ? "border-brand bg-brand/5" : "border-ink/10"}`}>
+                {online && <label className={`flex cursor-pointer gap-3 rounded-2xl border-2 p-4 ${pay === "ONLINE" ? "border-brand bg-brand/5" : "border-ink/10"}`}>
                   <input type="radio" checked={pay === "ONLINE"} onChange={() => setPay("ONLINE")} /><span><strong>Pay online</strong><br />Card, UPI or net banking via secure checkout. Card details never touch our servers.</span>
-                </label>
+                </label>}
               </div>
             </section>
             <section className="rounded-3xl bg-white p-6 ring-1 ring-ink/5">

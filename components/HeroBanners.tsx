@@ -21,7 +21,7 @@ export default function HeroBanners({ banners }: { banners: Banner[] }) {
           <p className="mt-3 text-base sm:text-lg">{b.subtitle}</p>
           <Link href={b.href} className="btn mt-6 bg-white text-ink hover:bg-sun">{b.cta} →</Link>
         </div>
-        <span aria-hidden className="absolute -right-4 bottom-0 select-none text-[9rem] opacity-90 sm:right-12 sm:text-[14rem]">{b.emoji}</span>
+        <span aria-hidden className="pointer-events-none absolute -right-6 bottom-0 select-none text-[8rem] opacity-25 sm:right-12 sm:text-[14rem] sm:opacity-90">{b.emoji}</span>
         <div className="absolute bottom-4 left-8 z-10 flex gap-2 sm:left-14">
           {banners.map((x, idx) => (
             <button key={x.id} aria-label={`Banner ${idx + 1}`} onClick={() => setI(idx)}

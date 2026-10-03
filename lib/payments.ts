@@ -13,6 +13,7 @@ const auth = () => "Basic " + Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${proc
 
 export async function createGatewayOrder(orderId: string, userId: string, amountRupees: number, receipt: string) {
   const now = new Date().toISOString();
+  if (!onlinePaymentsAvailable()) throw new Error("Online payments are not available yet. Please choose Cash on Delivery.");
   let provider: Payment["provider"] = "sandbox";
   let providerOrderId = newId("sbx");
   if (razorpayConfigured()) {
@@ -47,3 +48,8 @@ export async function refundGatewayPayment(p: Payment, amountRupees: number): Pr
   }
   return { ok: true, id: newId("rfnd") }; // sandbox / COD: recorded only
 }
+
+// The sandbox gateway simulates payments without charging anyone, so it must never be live by accident:
+// it is only available while ALLOW_SANDBOX_PAYMENTS=true and no real gateway credentials are configured.
+export const sandboxEnabled = () => !razorpayConfigured() && process.env.ALLOW_SANDBOX_PAYMENTS === "true";
+export const onlinePaymentsAvailable = () => razorpayConfigured() || sandboxEnabled();

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bad, getUser, str, unauthorized } from "@/lib/auth";
+import { bad, getUser, rateLimited, str, unauthorized } from "@/lib/auth";
 import { db, newId } from "@/lib/db";
 import { findProduct } from "@/lib/catalog";
 
@@ -17,8 +17,9 @@ export async function GET(_: Request, { params }: Ctx) {
   return NextResponse.json({ items });
 }
 
-// Reviews are auto-approved for now; admin moderation arrives in Milestone 3 (the `approved` flag is already honoured).
+// Reviews are published immediately; admins can hide or delete them from the moderation screen.
 export async function POST(req: Request, { params }: Ctx) {
+  if (rateLimited(req, "review", 10)) return bad("Too many requests. Please slow down.", 429);
   const u = await getUser();
   if (!u) return unauthorized();
   const p = await findProduct((await params).slug);
