@@ -8,3 +8,5 @@ next-env.d.ts
 *.zip
 test-results
 playwright-report
+
+.env*

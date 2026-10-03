@@ -4,6 +4,9 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { StoreProvider } from "@/lib/client-state";
 
+// Header/Footer read the live catalog, so pages are rendered per request (never at build time).
+export const dynamic = "force-dynamic";
+
 const site = process.env.NEXT_PUBLIC_SITE_URL || "https://ladli-toys.vercel.app";
 
 export const metadata: Metadata = {

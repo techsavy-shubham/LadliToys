@@ -17,7 +17,7 @@ Stack: Next.js (App Router), React, Tailwind CSS, Node route handlers (REST), Po
 
 ## 2. Go-live checklist (what the store owner must still provide)
 
-1. **Database** – accept the Neon terms (Vercel → Storage → Neon) or set `DATABASE_URL` to any PostgreSQL. Until then the site runs in *demo mode*: data lives in server memory and is lost on restarts / between serverless instances. **Do not take real orders before this is done.** The `docs` table is created automatically.
+1. **Database** – the live site uses **MongoDB Atlas** (`MONGODB_URI`, `MONGODB_DB`; Atlas Network Access must allow `0.0.0.0/0` because Vercel IPs change; use a dedicated database user limited to the `ladlitoys` database). If `MONGODB_URI` is absent the app falls back to PostgreSQL (`DATABASE_URL`, e.g. Neon) and finally to in-memory demo mode, where data is lost between serverless instances – never take real orders in demo mode. All data is stored in one `docs` collection/table created automatically.
 2. **Payment gateway** – add the Razorpay merchant credentials (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`). In the Razorpay dashboard add a webhook to `https://<your-domain>/api/payments/webhook` for `payment.captured`, `payment.failed` and `order.paid`. As soon as the keys exist the built-in sandbox is switched off automatically. Remove `ALLOW_SANDBOX_PAYMENTS` once real keys are set.
 3. **Email** – create a Resend account, verify the sending domain, set `RESEND_API_KEY` and `MAIL_FROM` (e.g. `Ladli Toys <orders@yourdomain.com>`). Until then every notification is only recorded in Admin → Notifications.
 4. **Domain** – add the custom domain in Vercel and set `NEXT_PUBLIC_SITE_URL` (used for sitemap, canonical URLs and email links).
@@ -31,7 +31,8 @@ Stack: Next.js (App Router), React, Tailwind CSS, Node route handlers (REST), Po
 |---|---|---|
 | `AUTH_SECRET` | yes | long random string; signs session cookies |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | yes | admin account is created on first login with these |
-| `DATABASE_URL` | recommended | PostgreSQL connection string |
+| `MONGODB_URI`, `MONGODB_DB` | recommended | MongoDB Atlas connection string and database name (takes priority) |
+| `DATABASE_URL` | alternative | PostgreSQL connection string (used when `MONGODB_URI` is not set) |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | for online payments | merchant credentials |
 | `RESEND_API_KEY`, `MAIL_FROM` | for emails | |
 | `NEXT_PUBLIC_SITE_URL` | recommended | e.g. `https://www.ladlitoys.com` |
@@ -75,6 +76,6 @@ npm run test:e2e        # 10 scenarios x 3 projects (Chromium, Firefox, mobile C
 Tests start their own server on port 3113 with test credentials. To run against a deployed site: `E2E_BASE_URL=https://… npx playwright test --grep-invert admin`.
 Safari/WebKit was not available in the build environment, so it has not been tested; please do a quick manual pass on an iPhone before launch.
 
-## 8. Moving off the demo database
+## 8. Database layer
 
-Data is stored through `lib/db.ts` (a small document store on a single Postgres table). `prisma/schema.prisma` contains the fully normalised model for a later migration if reporting needs grow.
+Data is stored through `lib/db.ts` (a small document store with MongoDB, PostgreSQL and in-memory backends). `prisma/schema.prisma` contains the fully normalised model for a later migration if reporting needs grow.

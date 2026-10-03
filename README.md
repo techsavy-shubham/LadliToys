@@ -1,6 +1,6 @@
 # Ladli Toys – E-Commerce Store & Management Platform
 
-Full-stack toy store built with Next.js, React, Tailwind CSS and Node REST APIs.
+Full-stack toy store built with Next.js, React, Tailwind CSS and Node REST APIs, with MongoDB Atlas (or PostgreSQL) for storage.
 **Status: all four milestones delivered** (storefront → shopping experience → admin, orders & payments → launch & finalization).
 
 - Live demo: https://ladli-toys.vercel.app · Admin: `/admin`
