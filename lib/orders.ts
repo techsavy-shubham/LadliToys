@@ -1,4 +1,4 @@
-import { db, newId } from "./db";
+import { db, DB_NOT_READY, newId, productionWithoutDb } from "./db";
 import type { Address } from "./addresses";
 import type { User } from "./auth";
 import { COLLECTIONS, getAllProducts, saveEntity } from "./catalog";
@@ -47,6 +47,7 @@ async function commit(o: Order) {
 export async function saveOrder(o: Order) { await db.put("orders", o.id, o); return o; }
 
 export async function createOrder(user: User, body: { items: CartLine[]; coupon?: string; addressId?: string; method: "COD" | "ONLINE" }) {
+  if (productionWithoutDb()) return { error: DB_NOT_READY };
   const addr = await db.get<Address>("addresses", String(body.addressId ?? ""));
   if (!addr || addr.userId !== user.id) return { error: "Please choose a delivery address." };
   const q = await quote(body.items, body.coupon);

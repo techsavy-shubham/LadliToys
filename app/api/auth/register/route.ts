@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { bad, hashPassword, isEmail, newUserDoc, publicUser, rateLimited, str, withSession } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, DB_NOT_READY, productionWithoutDb } from "@/lib/db";
 import { notify } from "@/lib/notify";
 
 export async function POST(req: Request) {
   if (rateLimited(req, "register", 10)) return bad("Too many attempts. Try again in a minute.", 429);
+  if (productionWithoutDb()) return bad(DB_NOT_READY, 503);
   const b = await req.json().catch(() => ({}));
   const name = str(b.name, 80), email = str(b.email).toLowerCase(), phone = str(b.phone, 20), password = typeof b.password === "string" ? b.password : "";
   if (name.length < 2) return bad("Please enter your name.");

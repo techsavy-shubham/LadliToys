@@ -1,9 +1,39 @@
 import { db, newId } from "./db";
 import { formatPrice } from "./data";
 
-// Transactional notifications. Every message is recorded in the "notifications" log (visible to admins).
-// If RESEND_API_KEY and MAIL_FROM are set, the message is also delivered by email via Resend; otherwise it is only logged.
-export const emailConfigured = () => !!(process.env.RESEND_API_KEY && process.env.MAIL_FROM);
+// Transactional notifications. Every message is recorded in the "notifications" log (visible to admins) and,
+// when an email provider is configured, delivered to the customer. Providers (first match wins):
+//   1. Resend - RESEND_API_KEY + MAIL_FROM
+//   2. SMTP   - SMTP_HOST + SMTP_USER + SMTP_PASS (+ optional SMTP_PORT, MAIL_FROM), e.g. Gmail with an app password
+// With neither configured, messages are only logged.
+export type EmailProvider = "resend" | "smtp" | "none";
+export const emailProvider = (): EmailProvider =>
+  process.env.RESEND_API_KEY && process.env.MAIL_FROM ? "resend"
+    : process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS ? "smtp" : "none";
+export const emailConfigured = () => emailProvider() !== "none";
+
+async function deliver(to: string, subject: string, text: string): Promise<{ status: "sent" | "failed"; error?: string }> {
+  try {
+    if (emailProvider() === "resend") {
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from: process.env.MAIL_FROM, to, subject, text }),
+      });
+      return r.ok ? { status: "sent" } : { status: "failed", error: (await r.text()).slice(0, 200) };
+    }
+    const nodemailer = (await import("nodemailer")).default;
+    const port = Number(process.env.SMTP_PORT) || 465;
+    const transport = nodemailer.createTransport({
+      host: process.env.SMTP_HOST, port, secure: port === 465,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+    await transport.sendMail({ from: process.env.MAIL_FROM || process.env.SMTP_USER, to, subject, text });
+    return { status: "sent" };
+  } catch (e) {
+    return { status: "failed", error: String(e).slice(0, 200) };
+  }
+}
 
 type Msg = { subject: string; text: string };
 const site = () => process.env.NEXT_PUBLIC_SITE_URL || "https://ladli-toys.vercel.app";
@@ -27,17 +57,8 @@ export async function notify<K extends keyof Templates>(to: string, event: K, da
   const { subject, text } = (templates[event] as (d: any) => Msg)(data);
   let status: "sent" | "logged" | "failed" = "logged";
   let error: string | undefined;
-  if (emailConfigured()) {
-    try {
-      const r = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: process.env.MAIL_FROM, to, subject, text }),
-      });
-      status = r.ok ? "sent" : "failed";
-      if (!r.ok) error = (await r.text()).slice(0, 200);
-    } catch (e) { status = "failed"; error = String(e).slice(0, 200); }
-  }
+  if (emailConfigured()) ({ status, error } = await deliver(to, subject, text));
+  if (status === "failed") console.error(`[notify] ${event} email to ${to} failed: ${error}`);
   const id = newId("n");
   await db.put("notifications", id, { id, to, event, subject, text, status, error, at: new Date().toISOString() }).catch(() => {});
 }

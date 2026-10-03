@@ -19,6 +19,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: false,
     timeout: 60_000,
-    env: { AUTH_SECRET: "e2e-secret", ADMIN_EMAIL: "owner@e2e.test", ADMIN_PASSWORD: "OwnerPass123!", ALLOW_SANDBOX_PAYMENTS: "true", ALLOW_DEV_RESET_LINK: "true" },
+    env: { AUTH_SECRET: "e2e-secret", ADMIN_EMAIL: "owner@e2e.test", ADMIN_PASSWORD: "OwnerPass123!", ALLOW_SANDBOX_PAYMENTS: "true", ALLOW_DEMO_DB: "true", DISABLE_RATE_LIMIT: "true", DATABASE_URL: "", POSTGRES_URL: "", MONGODB_URI: "", ALLOW_DEV_RESET_LINK: "true" },
   },
 });

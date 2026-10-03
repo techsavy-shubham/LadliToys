@@ -65,6 +65,7 @@ export const bad = (error: string, status = 400) => NextResponse.json({ error },
 // Simple in-memory rate limiter (per instance) for auth endpoints.
 const hits: Map<string, number[]> = ((globalThis as any).__ladliHits ??= new Map());
 export function rateLimited(req: Request, key: string, max = 10, windowMs = 60_000) {
+  if (process.env.DISABLE_RATE_LIMIT === "true") return false; // automated tests only - never set in production
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "local";
   const k = `${key}:${ip}`;
   const now = Date.now();

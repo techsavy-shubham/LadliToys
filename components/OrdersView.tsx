@@ -82,6 +82,23 @@ function PayNow({ o }: { o: Order }) {
   );
 }
 
+function CancelOrder({ o, onDone }: { o: Order; onDone: (o: Order) => void }) {
+  const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
+  if (!["PENDING_PAYMENT", "PLACED", "CONFIRMED"].includes(o.status) || (o.paymentStatus === "PAID" && o.paymentMethod === "ONLINE")) return null;
+  return (
+    <div className="rounded-3xl bg-white p-5 ring-1 ring-ink/5">
+      <button disabled={busy} className="btn btn-ghost !text-red-600" onClick={async () => {
+        if (!confirm("Cancel this order?")) return;
+        setBusy(true); setErr("");
+        const r = await api(`/api/orders/${o.id}/cancel`, "POST");
+        setBusy(false);
+        if (!r.ok) return setErr(r.data.error || "Could not cancel the order."); onDone(r.data.order);
+      }}>{busy ? "Cancelling…" : "Cancel order"}</button>
+      {err && <p className="mt-2 text-sm font-semibold text-red-600">{err}</p>}
+    </div>
+  );
+}
+
 export function OrderDetail({ id, fresh }: { id: string; fresh?: boolean }) {
   const [o, setO] = useState<Order | null | undefined>(undefined);
   useStore();
@@ -104,6 +121,7 @@ export function OrderDetail({ id, fresh }: { id: string; fresh?: boolean }) {
               <div className="rounded-3xl bg-red-50 p-6 text-center ring-1 ring-red-200"><h1 className="text-xl font-extrabold text-red-800">Payment {o.paymentStatus === "CANCELLED" ? "cancelled" : "not completed"}</h1><p className="text-sm text-red-700">No money was taken. You can retry below.</p></div>
             )}
             <PayNow o={o} />
+            <CancelOrder o={o} onDone={setO} />
             <Timeline o={o} />
             <div className="rounded-3xl bg-white p-6 ring-1 ring-ink/5">
               <div className="flex flex-wrap justify-between gap-2"><h2 className="text-xl font-extrabold">Order #{o.number}</h2><span className="rounded-full bg-sun/30 px-3 py-1 text-sm font-bold">{label(o.status)}</span></div>

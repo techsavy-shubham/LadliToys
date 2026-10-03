@@ -77,3 +77,21 @@ export const db = {
 };
 
 export const newId = (prefix: string) => `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
+
+// Safety net: a live store must never silently run on throw-away memory storage.
+// Set ALLOW_DEMO_DB=true only for demos / automated tests.
+export const productionWithoutDb = () => process.env.NODE_ENV === "production" && !db.persistent && process.env.ALLOW_DEMO_DB !== "true";
+export const DB_NOT_READY = "The store database is not configured yet, so this action is temporarily unavailable. Please try again later.";
+
+// Writes, reads back and deletes a probe document to prove the database is really usable.
+export async function healthCheck(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const id = newId("h");
+    await db.put("health", id, { ok: true });
+    const back = await db.get("health", id);
+    await db.del("health", id);
+    return { ok: !!back };
+  } catch (e) {
+    return { ok: false, error: String(e).slice(0, 160) };
+  }
+}
